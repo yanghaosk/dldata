@@ -22,6 +22,7 @@ cfg = edict({
     'epoch_size': 20,  # 训练次数
     'epoch_num': 10,
     'learn_rate': 1e-10,
+    'ckpt_dir':  "ckpt_dir",
     "num_filters": 3
 })
 
@@ -87,18 +88,26 @@ class Generator(nn.Cell):
             nn.BatchNorm2d(num_filters*8),nn.ReLU(),
             nn.Conv2d(num_filters*8, num_filters*8,2),
             nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+            nn.Conv2d(num_filters*8, num_filters*8,2),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+            nn.Conv2d(num_filters*8, num_filters*8,2),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
         )
         
         self.decoder = nn.SequentialCell(
             nn.Conv2dTranspose(num_filters*8, num_filters*8,2,dilation=1),
             nn.BatchNorm2d(num_filters*8),nn.ReLU(),
             nn.Conv2dTranspose(num_filters*8, num_filters*8*2,2,dilation=1),
-            nn.BatchNorm2d(num_filters*16),nn.ReLU(),
+            nn.BatchNorm2d(num_filters*8*2),nn.ReLU(),
             nn.Conv2dTranspose(num_filters*8*2, num_filters*8*2,2,dilation=1),
-            nn.BatchNorm2d(num_filters*16),nn.ReLU(),
+            nn.BatchNorm2d(num_filters*8*2),nn.ReLU(),
             nn.Conv2dTranspose(num_filters*8*2, num_filters*4,2,dilation=1),
             nn.BatchNorm2d(num_filters*4),nn.ReLU(),
-            nn.Conv2dTranspose(num_filters*4, num_filters,2,dilation=1),
+            nn.Conv2dTranspose(num_filters*4, num_filters*2,2,dilation=1),
+            nn.BatchNorm2d(num_filters*2),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters*2, num_filters,2,dilation=1),
+            nn.BatchNorm2d(num_filters),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters, num_filters,2,dilation=1),
             nn.BatchNorm2d(num_filters),nn.ReLU(),
             nn.Conv2dTranspose(num_filters, 3,2,dilation=1),
             nn.BatchNorm2d(3),nn.ReLU(),
@@ -140,6 +149,8 @@ class Discriminator(nn.Cell):
         x = self.discriminator(x)
         return x
 
+
+
 class Pix2Pix(nn.Cell):
     """Pix2Pix模型网络"""
     def __init__(self, Discriminator, Generator):
@@ -174,16 +185,15 @@ def discriminator_forward(gen_imgs, real_b,valid,fake):
     return d_loss
 
 grad_generator_fn = ops.value_and_grad(generator_forward, None,
-                                       g_opt.parameters,
-                                       has_aux=True)
+                                       g_opt.parameters)
 grad_discriminator_fn = ops.value_and_grad(discriminator_forward, None,
                                            d_opt.parameters)
 
 def train_step(real_a,real_b):
     real_a = real_a.reshape(1,3,512,512)
     real_b = real_b.reshape(1,3,512,512)
-    valid = Tensor(np.ones(real_a.shape).astype(np.float32))
-    fake = Tensor(np.zeros(real_a.shape).astype(np.float32))
+    valid = Tensor(np.ones((1,1,1,1)).astype(np.float32))
+    fake = Tensor(np.zeros((1,1,1,1)).astype(np.float32))
     (g_loss, gen_imgs), g_grads = grad_generator_fn(real_a,valid)
     g_opt(g_grads)
     d_loss, d_grads = grad_discriminator_fn(gen_imgs, real_b,valid,fake)
