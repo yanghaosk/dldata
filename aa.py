@@ -20,10 +20,9 @@ cfg = edict({
     'image_height': 512,  # 图片高度
     'image_width': 512,  # 图片宽度
     'epoch_size': 20,  # 训练次数
-    'epoch_num': 10,
-    'learn_rate': 1e-10,
-    'ckpt_dir':  "ckpt_dir",
-    "num_filters": 3
+    'epoch_num': 10, # 每一个epoch内循环次数
+    'learn_rate': 1e-10, 
+    "num_filters": 3 # 特征
 })
 
 weight_init = Normal(mean=0, sigma=0.02)
