@@ -27,8 +27,8 @@ def get_test_data():
     return np.array(test_x),np.array(test_y)
 
 x_test,y_test = get_test_data()
-x_test = x_test.reshape(cfg.train_size,cfg.channel,cfg.image_width,cfg.image_height)
-y_test = y_test.reshape(cfg.train_size,cfg.channel,cfg.image_width,cfg.image_height)
+x_test = x_test.reshape(cfg.test_size,cfg.channel,cfg.image_width,cfg.image_height)
+y_test = y_test.reshape(cfg.test_size,cfg.channel,cfg.image_width,cfg.image_height)
 
 param_dict = load_checkpoint("Generator.ckpt")
 gen = Generator()

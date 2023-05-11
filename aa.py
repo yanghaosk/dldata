@@ -103,29 +103,22 @@ def train_step(real_a,real_b):
     d_opt(d_grads)
     return g_loss, d_loss
 
-g_losses = []
-d_losses = []
-
 dataset = gen_data(x_train,y_train)
 data_loader = dataset.create_dict_iterator(output_numpy=True, num_epochs=cfg.epoch_size)
 
+n = 0
 for epoch in range(cfg.epoch_num):
     net_generator.set_train()
     net_discriminator.set_train()
     # 为每轮训练读入数据
     for i, data in enumerate(data_loader):
-        start_time = datetime.datetime.now()
         input_image = Tensor(data["input_images"])
         target_image = Tensor(data["target_images"])
         g_loss, d_loss = train_step(input_image,target_image)
-        end_time = datetime.datetime.now()
-        d_losses.append(d_loss.asnumpy())
-        g_losses.append(g_loss.asnumpy())
-        delta = (end_time - start_time).microseconds
-        if i % 2 == 1:
-            print("per step:{:.2f}ms  epoch:{}/{} step:{}/{} Dloss:{:.6f}  Gloss:{:.6f} ".format(
-                (delta / 1000), (epoch + 1), (cfg.epoch_num), (i+1)*2, cfg.epoch_size, float(d_loss), float(g_loss)))
-        d_losses.append(d_loss)
-        g_losses.append(g_loss)
+        if i % (cfg.train_size/20) == 1:
+            print("epoch:{}/{} step:{}/{} Dloss:{:.6f}  Gloss:{:.6f} ".format(
+                (epoch + 1), (cfg.epoch_num), int(i/20), cfg.epoch_size, float(d_loss), float(g_loss)))
     if (epoch + 1) == cfg.epoch_num:
-        mindspore.save_checkpoint(net_generator, "Generator.ckpt")
+        epoch = 0
+        n +=1
+        mindspore.save_checkpoint(net_generator, "./model/Generator"+str(n)+".ckpt")
