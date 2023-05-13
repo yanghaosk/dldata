@@ -14,6 +14,10 @@ def draw(rgb_image):
     plt.imshow(rgb_image, cmap=None)
     plt.show()
 
+def draw_test(image):
+    plt.imshow(image.reshape(512,512,3))
+    plt.show()
+
 def get_test_data():
     test_x = []
     test_y = []
@@ -30,9 +34,9 @@ x_test,y_test = get_test_data()
 x_test = x_test.reshape(cfg.test_size,cfg.channel,cfg.image_width,cfg.image_height)
 y_test = y_test.reshape(cfg.test_size,cfg.channel,cfg.image_width,cfg.image_height)
 
-param_dict = load_checkpoint("Generator.ckpt")
+# param_dict = load_checkpoint("./model/Generator1.0.ckpt")
 gen = Generator()
-load_param_into_net(gen, param_dict)
+# load_param_into_net(gen, param_dict)
 y = gen(Tensor.from_numpy(x_test).astype(mindspore.float32))
 y = (y+1)*127.5
 

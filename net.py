@@ -1,53 +1,104 @@
 import mindspore.nn as nn
+import mindspore.ops.operations as P
 from cfg import cfg
 
 class Generator(nn.Cell):
     def __init__(self, num_filters=cfg.num_filters):
         super(Generator, self).__init__()
-        self.bn = num_filters
-        self.relu = nn.ReLU()
 
-        self.encoder = nn.SequentialCell(
+        self.op = P.Concat(1)
+
+        self.down1 = nn.SequentialCell(
             nn.Conv2d(3, num_filters,2),
-            nn.BatchNorm2d(num_filters),nn.ReLU(),
-            nn.Conv2d(num_filters, num_filters*2,2),
-            nn.BatchNorm2d(num_filters*2),nn.ReLU(),
-            nn.Conv2d(num_filters*2, num_filters*4,2),
-            nn.BatchNorm2d(num_filters*4),nn.ReLU(),
-            nn.Conv2d(num_filters*4, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
-            nn.Conv2d(num_filters*8, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
-            nn.Conv2d(num_filters*8, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
-            nn.Conv2d(num_filters*8, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
-            nn.Conv2d(num_filters*8, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+            nn.BatchNorm2d(num_filters),nn.ReLU()
         )
-        
-        self.decoder = nn.SequentialCell(
+        self.down2 = nn.SequentialCell(
+            nn.Conv2d(num_filters, num_filters*2,2),
+            nn.BatchNorm2d(num_filters*2),nn.ReLU()
+        )
+        self.down3 = nn.SequentialCell(
+            nn.Conv2d(num_filters*2, num_filters*4,2),
+            nn.BatchNorm2d(num_filters*4),nn.ReLU()
+        )
+        self.down4 = nn.SequentialCell(
+            nn.Conv2d(num_filters*4, num_filters*8,2),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+        )
+        self.down5 = nn.SequentialCell(
+            nn.Conv2d(num_filters*8, num_filters*8,2),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+        )
+        self.down6 = nn.SequentialCell(
+            nn.Conv2d(num_filters*8, num_filters*8,2),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+        )
+        self.down7 = nn.SequentialCell(
+            nn.Conv2d(num_filters*8, num_filters*8,2),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+        )
+        self.down8 = nn.SequentialCell(
+            nn.Conv2d(num_filters*8, num_filters*8,2),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+        )
+
+        self.up1 = nn.SequentialCell(
             nn.Conv2dTranspose(num_filters*8, num_filters*8,2,dilation=1),
             nn.BatchNorm2d(num_filters*8),nn.ReLU(),
-            nn.Conv2dTranspose(num_filters*8, num_filters*8*2,2,dilation=1),
-            nn.BatchNorm2d(num_filters*8*2),nn.ReLU(),
-            nn.Conv2dTranspose(num_filters*8*2, num_filters*8*2,2,dilation=1),
-            nn.BatchNorm2d(num_filters*8*2),nn.ReLU(),
+        )
+        self.up2 = nn.SequentialCell(
+            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,2,dilation=1),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+        )
+        self.up3 = nn.SequentialCell(
+            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,2,dilation=1),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+        )
+        self.up4 = nn.SequentialCell(
+            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,2,dilation=1),
+            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+        )
+        self.up5 = nn.SequentialCell(
             nn.Conv2dTranspose(num_filters*8*2, num_filters*4,2,dilation=1),
             nn.BatchNorm2d(num_filters*4),nn.ReLU(),
-            nn.Conv2dTranspose(num_filters*4, num_filters*2,2,dilation=1),
+        )
+        self.up6 = nn.SequentialCell(
+            nn.Conv2dTranspose(num_filters*4*2, num_filters*2,2,dilation=1),
             nn.BatchNorm2d(num_filters*2),nn.ReLU(),
-            nn.Conv2dTranspose(num_filters*2, num_filters,2,dilation=1),
+        )
+        self.up7 = nn.SequentialCell(
+            nn.Conv2dTranspose(num_filters*2*2, num_filters,2,dilation=1),
             nn.BatchNorm2d(num_filters),nn.ReLU(),
-            nn.Conv2dTranspose(num_filters, num_filters,2,dilation=1),
-            nn.BatchNorm2d(num_filters),nn.ReLU(),
-            nn.Conv2dTranspose(num_filters, 3,2,dilation=1),
+        )
+        self.up8 = nn.SequentialCell(
+            nn.Conv2dTranspose(num_filters*2, 3,2,dilation=1),
             nn.BatchNorm2d(3),nn.Tanh(),
         )
 
     def construct(self, x):
-        x = self.encoder(x)
-        x = self.decoder(x)
+        x1 = self.down1(x)
+        x2 = self.down2(x1)
+        x3 = self.down3(x2)
+        x4 = self.down4(x3)
+        x5 = self.down5(x4)
+        x6 = self.down6(x5)
+        x7 = self.down7(x6)
+        x8 = self.down8(x7)
+
+        x = self.up1(x8)
+        x = self.op((x, x7))
+        x = self.up2(x)
+        x = self.op((x, x6))
+        x = self.up3(x)
+        x = self.op((x, x5))
+        x = self.up4(x)
+        x = self.op((x, x4))
+        x = self.up5(x)
+        x = self.op((x, x3))
+        x = self.up6(x)
+        x = self.op((x, x2))
+        x = self.up7(x)
+        x = self.op((x, x1))
+        x = self.up8(x)
         return x
 
 class Discriminator(nn.Cell):

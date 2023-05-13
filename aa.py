@@ -7,6 +7,7 @@ from PIL import Image
 from net import Generator,Discriminator
 
 import mindspore
+from mindspore import numpy
 from mindspore import ops
 import mindspore.nn as nn
 from mindspore import dataset as ds
@@ -50,17 +51,20 @@ def gen_data(X,Y):
 net_generator = Generator()
 net_discriminator = Discriminator()
 adversarial_loss = nn.BCELoss(reduction='mean')
+L1_loss = nn.loss.L1Loss()
+color_loss = nn.loss.MSELoss()
 
-d_opt = nn.Adam(net_discriminator.trainable_params(), learning_rate=cfg.learn_rate,
-                beta1=0.5, beta2=0.999, loss_scale=1)
+d_opt = nn.Adam(net_discriminator.trainable_params(), learning_rate=cfg.learn_rate)
 d_opt.update_parameters_name('optim_d')
-g_opt = nn.Adam(net_generator.trainable_params(), learning_rate=cfg.learn_rate,
-                beta1=0.5, beta2=0.999, loss_scale=1)
+g_opt = nn.Adam(net_generator.trainable_params(), learning_rate=cfg.learn_rate*2)
 g_opt.update_parameters_name('optim_g')
 
-def generator_forward(real_a,valid):
+def generator_forward(real_a,real_b,valid):
     gen_imgs = net_generator(real_a)
-    g_loss = adversarial_loss(net_discriminator(gen_imgs), valid)
+    g_loss1 = adversarial_loss(net_discriminator(gen_imgs), valid)
+    g_loss2 = L1_loss(gen_imgs,real_b)
+    g_loss3 = color_loss(gen_imgs,real_b)
+    g_loss = g_loss1 + g_loss2*5 + g_loss3*10
     return g_loss, gen_imgs
 
 def discriminator_forward(gen_imgs, real_b,valid,fake):
@@ -68,24 +72,6 @@ def discriminator_forward(gen_imgs, real_b,valid,fake):
     fake_loss = adversarial_loss(net_discriminator(gen_imgs), fake)
     d_loss = (real_loss + fake_loss) / 2
     return d_loss
-
-# g_grads = grads_gen(generator_forward,g_opt.parameters)(real_a,valid)
-# g_opt(g_grads) 报错
-
-# grads_gen = ops.GradOperation(get_all=True)
-# grads_dis = ops.GradOperation(get_all=True)
-# def train_step2(real_a,real_b):
-#     real_a = real_a.reshape(1,3,512,512)
-#     real_b = real_b.reshape(1,3,512,512)
-#     valid = Tensor(np.ones((1,1,1,1)).astype(np.float32))
-#     fake = Tensor(np.zeros((1,1,1,1)).astype(np.float32))
-#     (g_loss, gen_imgs) = generator_forward(real_a,valid)
-#     g_grads = grads_gen(generator_forward,g_opt.parameters)(real_a,valid)
-#     g_opt(g_grads)
-#     d_loss = discriminator_forward(gen_imgs,real_b,valid,fake)
-#     d_grads = grads_dis(discriminator_forward,d_opt.parameters)(gen_imgs,real_b,valid,fake)
-#     d_opt(d_grads)
-#     return g_loss, d_loss
 
 grad_generator_fn = ops.value_and_grad(generator_forward, None,
                                        g_opt.parameters)
@@ -97,28 +83,41 @@ def train_step(real_a,real_b):
     real_b = real_b.reshape(1,3,512,512)
     valid = Tensor(np.ones((1,1,1,1)).astype(np.float32))
     fake = Tensor(np.zeros((1,1,1,1)).astype(np.float32))
-    (g_loss, gen_imgs), g_grads = grad_generator_fn(real_a,valid)
+    (g_loss, gen_imgs), g_grads = grad_generator_fn(real_a,real_b,valid)
     g_opt(g_grads)
     d_loss, d_grads = grad_discriminator_fn(gen_imgs, real_b,valid,fake)
     d_opt(d_grads)
     return g_loss, d_loss
 
 dataset = gen_data(x_train,y_train)
-data_loader = dataset.create_dict_iterator(output_numpy=True, num_epochs=cfg.epoch_size)
 
-n = 0
-for epoch in range(cfg.epoch_num):
+# for epoch in range(cfg.epoch_num):
+#     net_generator.set_train()
+#     net_discriminator.set_train()
+#     # 为每轮训练读入数据
+#     for i, data in enumerate(data_loader):
+#         input_image = Tensor(data["input_images"])
+#         target_image = Tensor(data["target_images"])
+#         g_loss, d_loss = train_step(input_image,target_image)
+#         if i % (cfg.train_size/20) == 1:
+#             print("epoch:{}/{} step:{}/{} Dloss:{:.6f}  Gloss:{:.6f} ".format(
+#                 (epoch + 1), (cfg.epoch_num), int(i/20), cfg.epoch_size, float(d_loss), float(g_loss)))
+#     if (epoch + 1) == cfg.epoch_num:
+#         mindspore.save_checkpoint(net_generator, "./model/Generator"+".ckpt")
+
+epoch = 0
+while 1:
     net_generator.set_train()
     net_discriminator.set_train()
     # 为每轮训练读入数据
+    data_loader = dataset.create_dict_iterator(output_numpy=True, num_epochs=cfg.epoch_size)
     for i, data in enumerate(data_loader):
         input_image = Tensor(data["input_images"])
         target_image = Tensor(data["target_images"])
         g_loss, d_loss = train_step(input_image,target_image)
         if i % (cfg.train_size/20) == 1:
             print("epoch:{}/{} step:{}/{} Dloss:{:.6f}  Gloss:{:.6f} ".format(
-                (epoch + 1), (cfg.epoch_num), int(i/20), cfg.epoch_size, float(d_loss), float(g_loss)))
-    if (epoch + 1) == cfg.epoch_num:
-        epoch = 0
-        n +=1
-        mindspore.save_checkpoint(net_generator, "./model/Generator"+str(n)+".ckpt")
+                (epoch + 1), (cfg.epoch_num), int(i/20), 20, float(d_loss), float(g_loss)))
+    if int((epoch + 1)%cfg.epoch_num) == 0:
+        mindspore.save_checkpoint(net_generator, "./model/Generator"+str((epoch + 1)/cfg.epoch_num)+".ckpt")
+    epoch += 1
