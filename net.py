@@ -9,70 +9,71 @@ class Generator(nn.Cell):
         self.op = P.Concat(1)
 
         self.down1 = nn.SequentialCell(
-            nn.Conv2d(3, num_filters,2),
-            nn.BatchNorm2d(num_filters),nn.ReLU()
+            nn.Conv2d(3, num_filters,3),
+            nn.BatchNorm2d(num_filters),nn.LeakyReLU(0.2)
         )
         self.down2 = nn.SequentialCell(
-            nn.Conv2d(num_filters, num_filters*2,2),
-            nn.BatchNorm2d(num_filters*2),nn.ReLU()
+            nn.Conv2d(num_filters, num_filters*2,3),
+            nn.BatchNorm2d(num_filters*2),nn.LeakyReLU(0.2)
         )
         self.down3 = nn.SequentialCell(
-            nn.Conv2d(num_filters*2, num_filters*4,2),
-            nn.BatchNorm2d(num_filters*4),nn.ReLU()
+            nn.Conv2d(num_filters*2, num_filters*4,3),
+            nn.BatchNorm2d(num_filters*4),nn.LeakyReLU(0.2)
         )
         self.down4 = nn.SequentialCell(
-            nn.Conv2d(num_filters*4, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+            nn.Conv2d(num_filters*4, num_filters*8,3),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2)
         )
         self.down5 = nn.SequentialCell(
-            nn.Conv2d(num_filters*8, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+            nn.Conv2d(num_filters*8, num_filters*8,3),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2)
         )
         self.down6 = nn.SequentialCell(
-            nn.Conv2d(num_filters*8, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+            nn.Conv2d(num_filters*8, num_filters*8,3),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2)
         )
         self.down7 = nn.SequentialCell(
-            nn.Conv2d(num_filters*8, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+            nn.Conv2d(num_filters*8, num_filters*8,3),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2)
         )
         self.down8 = nn.SequentialCell(
-            nn.Conv2d(num_filters*8, num_filters*8,2),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU()
+            nn.Conv2d(num_filters*8, num_filters*8,3),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2)
         )
 
         self.up1 = nn.SequentialCell(
-            nn.Conv2dTranspose(num_filters*8, num_filters*8,2,dilation=1),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters*8, num_filters*8,3,dilation=1),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2),
         )
         self.up2 = nn.SequentialCell(
-            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,2,dilation=1),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,3,dilation=1),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2),
         )
         self.up3 = nn.SequentialCell(
-            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,2,dilation=1),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,3,dilation=1),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2),
         )
         self.up4 = nn.SequentialCell(
-            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,2,dilation=1),
-            nn.BatchNorm2d(num_filters*8),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters*8*2, num_filters*8,3,dilation=1),
+            nn.BatchNorm2d(num_filters*8),nn.LeakyReLU(0.2),
         )
         self.up5 = nn.SequentialCell(
-            nn.Conv2dTranspose(num_filters*8*2, num_filters*4,2,dilation=1),
-            nn.BatchNorm2d(num_filters*4),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters*8*2, num_filters*4,3,dilation=1),
+            nn.BatchNorm2d(num_filters*4),nn.LeakyReLU(0.2),
         )
         self.up6 = nn.SequentialCell(
-            nn.Conv2dTranspose(num_filters*4*2, num_filters*2,2,dilation=1),
-            nn.BatchNorm2d(num_filters*2),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters*4*2, num_filters*2,3,dilation=1),
+            nn.BatchNorm2d(num_filters*2),nn.LeakyReLU(0.2),
         )
         self.up7 = nn.SequentialCell(
-            nn.Conv2dTranspose(num_filters*2*2, num_filters,2,dilation=1),
-            nn.BatchNorm2d(num_filters),nn.ReLU(),
+            nn.Conv2dTranspose(num_filters*2*2, num_filters,3,dilation=1),
+            nn.BatchNorm2d(num_filters),nn.LeakyReLU(0.2),
         )
         self.up8 = nn.SequentialCell(
-            nn.Conv2dTranspose(num_filters*2, 3,2,dilation=1),
-            nn.BatchNorm2d(3),nn.Tanh(),
+            nn.Conv2dTranspose(num_filters*2, 3, 3),
+            nn.Tanh(),
         )
+
 
     def construct(self, x):
         x1 = self.down1(x)

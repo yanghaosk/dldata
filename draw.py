@@ -34,9 +34,9 @@ x_test,y_test = get_test_data()
 x_test = x_test.reshape(cfg.test_size,cfg.channel,cfg.image_width,cfg.image_height)
 y_test = y_test.reshape(cfg.test_size,cfg.channel,cfg.image_width,cfg.image_height)
 
-# param_dict = load_checkpoint("./model/Generator1.0.ckpt")
+param_dict = load_checkpoint("./model/Generator1.0.ckpt")
 gen = Generator()
-# load_param_into_net(gen, param_dict)
+load_param_into_net(gen, param_dict)
 y = gen(Tensor.from_numpy(x_test).astype(mindspore.float32))
 y = (y+1)*127.5
 
